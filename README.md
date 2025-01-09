@@ -16,3 +16,6 @@
 - [selfdriven.finance](https://selfdriven.finance)
 - [selfdriven.social](https://selfdriven.social) (Authenticated Transfer Protocol)
 - [GitHub Repo](https://github.com/selfdriven-foundation/selfdriven-exchange)
+
+### Roadmap
+- Funding
