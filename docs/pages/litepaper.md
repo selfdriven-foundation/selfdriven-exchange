@@ -1,6 +1,6 @@
 ---
 layout: default
-title: selfdriven Exchange
+title: selfdriven Exchange Litepaper
 permalink: /litepaper/
 ---
 
