@@ -9,8 +9,8 @@
 - Establishing Trust (Proof of Activity & Growth)
 - [Litepaper](/litepaper/)
 
-### Use-Cases
-- selfdriven organisations that cooperative own tokenised assets - managed via the [selfdriven Network Infra Interface](https://selfdriven.network/infra-interface/).
+### Community Use-Cases
+- Self-driven organisations cooperatively own tokenised assets, which are managed via the [selfdriven Network Infra Interface](https://selfdriven.network/infra-interface/).
 
 ### Resources
 - [selfdriven.finance](https://selfdriven.finance)
