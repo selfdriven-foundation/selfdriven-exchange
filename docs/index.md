@@ -6,35 +6,38 @@ title: Home
 ### Exchanging community value.
 
 ### Status
-- Research & Development
+- Research & Design
 
 ### Scope
-- Collabration
-- Identity & Trust (SSI)
-- Establishing Trust (Proof of Activty & Growth)
+- A way for community members to exchange community owned assets
+- Identity & Trust based on SSI - i.e. who can exchange which assets.
+- Establishing Trust (Proof of Activity & Growth)
 - [Litepaper](/litepaper/)
 
-### Contact Us
-- [selfdriven.fyi/connect](https://selfdriven.fyi/connect)
+### Use-Cases
+- selfdriven organisations that cooperative own tokenised assets - managed via the [selfdriven Network Infra Interface](https://selfdriven.network/infra-interface/).
 
 ### Resources
-- **[GitHub Repo](https://github.com/selfdriven-foundation/selfdriven-exchange)**
 - [selfdriven.finance](https://selfdriven.finance)
-- [selfdriven.social](https://selfdriven.social) (Authenticated Transfer Protocol)
 - [selfdriven.network](https://selfdriven.network)
 - [octomics.io](https://octomics.io)
+- [octology.io](https://octology.io)
+- [selfdriven.social](https://selfdriven.social) (Authenticated Transfer Protocol)
 
 ### Roadmap
-- Design 
+- Design
 - Funding
+- Build
 
 ### Related
-
 - [selfdriven.id](https://selfdriven.id) - Identity & Trust
 - [skillzeb.io](https://skillzeb.io) - templates
 - [heyOcto.ai](https://heyocto.ai) - templates
 - [selfdriven.fyi/intelligence](https://selfdriven.fyi/intelligence)
 - [selfdriven.fyi/research](https://selfdriven.fyi/research)
 - [selfdriven.university](https://selfdriven.university)
+
+### Contact Us
+- [selfdriven.fyi/connect](https://selfdriven.fyi/connect)
 
 
