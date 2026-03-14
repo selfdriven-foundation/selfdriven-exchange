@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: selfdriven
 title: selfdriven Exchange
 ---
 
@@ -17,14 +17,13 @@ title: selfdriven Exchange
 ## Resources
 - [selfdriven.finance](https://selfdriven.finance)
 - [selfdriven.network](https://selfdriven.network)
+- [selfdriven.id](https://selfdriven.id) - Identity & Trust
 - [octomics.io](https://octomics.io)
-- [octology.io](https://octology.io)
+- [octology.io](https://octology.io) - templates, skills
 - [selfdriven.social](https://selfdriven.social) (Authenticated Transfer Protocol)
 
 ## Related
-- [selfdriven.id](https://selfdriven.id) - Identity & Trust
-- [skillzeb.io](https://skillzeb.io) - templates
-- [heyOcto.ai](https://heyocto.ai) - templates
+- [heyOcto.ai](https://heyocto.ai)
 - [selfdriven.fyi/intelligence](https://selfdriven.fyi/intelligence)
 - [selfdriven.fyi/research](https://selfdriven.fyi/research)
 - [selfdriven.institute](https://selfdriven.institute)
