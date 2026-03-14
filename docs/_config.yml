@@ -1,13 +1,15 @@
-title: "selfdrivenAI"
-description: "Combining the selfdriven Framework with the power of Generative AI to enable decentralised human/purpose driven communities"
+title: "selfdriven Exchange"
+description: "Exchanging community value"
 baseurl: ""
 url: ""
+context: "exchange"
+repo: "selfdriven-exchange"
 defaults:
   - scope:
       path: "pages"
       type: "pages"
     values:
-      layout: default
+      layout: selfdriven
 plugins:
   - jekyll-feed
   - jekyll-seo-tag
