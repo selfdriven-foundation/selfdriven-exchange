@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bitcoin → Cardano Bridge · selfdriven</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ===== SELFDRIVEN TOKENS ===== */
+:root {
+  --bg: #f5f2ed;
+  --surface: #edeae3;
+  --surface2: #e5e1d8;
+  --border: #ddd8ce;
+  --text: #1a1410;
+  --muted: #6b5f52;
+  --muted2: #9e9085;
+  --accent: #c8442f;
+  --accent-dim: rgba(200,68,47,0.10);
+  --accent-strong: rgba(200,68,47,0.18);
+  --card-radius: 20px;
+  --shadow: 0 2px 16px rgba(0,0,0,0.07);
+  --btc: #F7931A;
+  --btc-light: #FEF0DC;
+  --btc-dark: #7A3F00;
+  --ada: #0033AD;
+  --ada-light: #dce8ff;
+  --ada-dark: #001A6B;
+  --locked: #16A34A;
+  --locked-light: #DCFCE7;
+  --proof: #7C3AED;
+  --proof-light: #EDE9FE;
+  --risc: #0E7490;
+  --risc-light: #CFFAFE;
+  --ff: 'Poppins', sans-serif;
+  --fm: 'JetBrains Mono', monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0a0a0a;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --text: #f0ede8;
+    --muted: #b0a89e;
+    --muted2: #7a7268;
+    --accent: #e85d4a;
+    --accent-dim: rgba(232,93,74,0.12);
+    --accent-strong: rgba(232,93,74,0.20);
+    --shadow: 0 2px 16px rgba(0,0,0,0.4);
+    --btc-light: #2a1a00;
+    --btc-dark: #ffb866;
+    --ada-light: #0a1a3a;
+    --ada-dark: #93b4ff;
+    --locked-light: #0a200e;
+    --proof-light: #1a0a30;
+    --risc-light: #082830;
+  }
+}
+
+html { scroll-behavior: smooth; }
+body { font-family: var(--ff); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; }
+
+/* ===== HEADER ===== */
+header {
+  background: var(--text);
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+}
+.hdr-inner { max-width: 900px; margin: 0 auto; padding: 3rem 2rem 2.5rem; position: relative; z-index: 2; }
+header::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 80% 50%, rgba(200,68,47,0.18) 0%, transparent 60%);
+  pointer-events: none;
+}
+header::after {
+  content: '₿'; position: absolute; right: -10px; top: -20px;
+  font-size: 260px; opacity: .04; font-family: var(--ff); font-weight: 900;
+  color: var(--btc); pointer-events: none; line-height: 1;
+}
+.hdr-eyebrow {
+  font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.hdr-eyebrow::before {
+  content: ''; width: 24px; height: 2px; background: var(--accent); border-radius: 2px;
+}
+header h1 {
+  font-size: clamp(26px, 4.5vw, 46px); font-weight: 900; line-height: 1.1;
+  letter-spacing: -0.04em; color: #f0ede8; margin-bottom: 12px;
+}
+header h1 span { color: var(--accent); }
+header p { font-size: 14px; line-height: 1.75; color: rgba(240,237,232,0.6); max-width: 560px; font-weight: 300; }
+.hdr-logo {
+  position: absolute; top: 2rem; right: 2rem;
+  width: 40px; height: 40px; border-radius: 10px; overflow: hidden;
+  background: var(--accent); display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 900; color: #fff; font-family: var(--ff);
+}
+
+/* ===== NAV ===== */
+nav {
+  background: rgba(245,242,237,0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+}
+@media (prefers-color-scheme: dark) {
+  nav { background: rgba(10,10,10,0.92); }
+}
+.nav-inner { max-width: 900px; margin: 0 auto; display: flex; overflow-x: auto; scrollbar-width: none; }
+.nav-inner::-webkit-scrollbar { display: none; }
+.nav-btn {
+  padding: 14px 18px; font-size: 13px; font-weight: 500;
+  border: none; background: none; cursor: pointer; color: var(--muted);
+  white-space: nowrap; border-bottom: 2.5px solid transparent;
+  transition: all .2s; font-family: var(--ff);
+}
+.nav-btn:hover { color: var(--text); }
+.nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
+
+/* ===== MAIN ===== */
+main { max-width: 900px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+
+/* ===== PANELS ===== */
+.panel { display: none; animation: fadeUp .3s ease; }
+.panel.active { display: block; }
+@keyframes fadeUp { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform:none; } }
+
+/* ===== TYPOGRAPHY ===== */
+.sec-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+.sec-title { font-size: clamp(20px, 3vw, 30px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 10px; }
+.sec-sub { font-size: 14px; color: var(--muted); line-height: 1.75; margin-bottom: 2rem; max-width: 640px; font-weight: 400; }
+
+/* ===== CARDS ===== */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--card-radius); padding: 1.4rem 1.6rem; margin-bottom: 14px;
+  transition: box-shadow .2s;
+}
+.card:hover { box-shadow: var(--shadow); }
+.card.accent-top { border-top: 3px solid var(--accent); }
+.card-title { font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--muted2); margin-bottom: 8px; text-transform: uppercase; }
+.card-body { font-size: 13px; line-height: 1.75; color: var(--muted); }
+.card-body em { font-style: italic; color: var(--text); }
+.card-body strong { font-weight: 600; color: var(--text); }
+
+/* ===== HIGHLIGHT ===== */
+.highlight {
+  border-left: 3px solid var(--accent); border-radius: 0 14px 14px 0;
+  padding: 14px 18px; background: var(--accent-dim); margin: 1.25rem 0;
+  font-size: 13px; line-height: 1.75; color: var(--muted);
+}
+.highlight strong { color: var(--text); font-weight: 600; }
+
+/* ===== CONCEPT GRID ===== */
+.concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 12px; margin-bottom: 1.75rem; }
+.concept-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--card-radius); padding: 1.1rem 1.2rem;
+  transition: box-shadow .2s, border-color .2s;
+}
+.concept-card:hover { box-shadow: var(--shadow); border-color: var(--accent); }
+.c-icon { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 10px; }
+.concept-card h4 { font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+.concept-card p { font-size: 12px; color: var(--muted); line-height: 1.65; }
+
+/* ===== TWO-CHAIN DIAGRAM ===== */
+.chain-wrap {
+  display: grid; grid-template-columns: 1fr 56px 1fr; gap: 0;
+  align-items: center; margin: 1.5rem 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--card-radius); padding: 1.5rem 1.25rem;
+}
+.chain-col { display: flex; flex-direction: column; gap: 8px; }
+.chain-label {
+  font-size: 12px; font-weight: 700; letter-spacing: .06em;
+  padding: 5px 12px; border-radius: 10px;
+  display: inline-flex; align-items: center; gap: 6px;
+  width: fit-content; margin-bottom: 4px; font-family: var(--ff);
+}
+.chain-label.btc { background: var(--btc-light); color: var(--btc-dark); }
+.chain-label.ada { background: var(--ada-light); color: var(--ada-dark); }
+.chain-block {
+  border-radius: 12px; padding: 9px 12px; font-size: 12px;
+  border: 1px solid var(--border); background: var(--bg); line-height: 1.45; color: var(--muted);
+}
+.chain-block strong { font-size: 10px; font-weight: 700; letter-spacing: .06em; color: var(--muted2); display: block; margin-bottom: 3px; text-transform: uppercase; }
+.chain-block.hl-lock { border-color: var(--locked); background: var(--locked-light); }
+.chain-block.hl-lock strong { color: var(--locked); }
+.chain-block.hl-ada { border-color: var(--ada); background: var(--ada-light); }
+.chain-block.hl-ada strong { color: var(--ada-dark); }
+.chain-block.hl-btc { border-color: var(--btc); background: var(--btc-light); }
+.chain-block.hl-btc strong { color: var(--btc-dark); }
+.bridge-mid { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 0 4px; }
+.barrow { position: relative; width: 30px; height: 2px; }
+.barrow.fwd { background: linear-gradient(90deg, var(--btc), var(--ada)); }
+.barrow.rev { background: linear-gradient(90deg, var(--ada), var(--btc)); transform: scaleX(-1); }
+.barrow.fwd::after { content:''; position:absolute; right:-5px; top:-4px; border-left:8px solid var(--ada); border-top:5px solid transparent; border-bottom:5px solid transparent; }
+.barrow.rev::after { content:''; position:absolute; right:-5px; top:-4px; border-left:8px solid var(--btc); border-top:5px solid transparent; border-bottom:5px solid transparent; }
+.bridge-lbl { font-size: 9px; color: var(--muted2); font-family: var(--fm); text-align: center; }
+
+/* ===== TAPROOT TREE ===== */
+.taproot-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius); padding: 1.5rem; margin: 1.25rem 0; }
+.tr-root { text-align: center; margin-bottom: 12px; }
+.tr-root span { background: var(--btc); color: #fff; padding: 7px 20px; border-radius: 999px; font-size: 13px; font-weight: 700; font-family: var(--ff); }
+.tr-connector { text-align: center; font-size: 11px; color: var(--muted2); margin-bottom: 10px; font-family: var(--fm); }
+.tr-branches { display: flex; gap: 10px; flex-wrap: wrap; }
+.tr-branch { flex: 1; min-width: 140px; text-align: center; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); font-size: 11px; line-height: 1.55; color: var(--muted); }
+.tr-branch.used { border-color: var(--proof); background: var(--proof-light); color: var(--muted); }
+.tr-branch.used .tr-blbl { color: var(--proof); }
+.tr-branch.hidden { opacity: .4; }
+.tr-blbl { font-weight: 700; font-size: 10px; letter-spacing: .06em; display: block; margin-bottom: 4px; color: var(--muted2); text-transform: uppercase; }
+.tr-note { text-align: center; font-size: 11px; color: var(--muted2); margin-top: 10px; font-style: italic; }
+
+/* ===== STEP LIST ===== */
+.step-list { display: flex; flex-direction: column; }
+.step-item { display: flex; gap: 14px; align-items: flex-start; padding: 14px 0; border-bottom: 1px solid var(--border); }
+.step-item:last-child { border-bottom: none; }
+.snum { min-width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; font-family: var(--ff); }
+.snum.btc { background: var(--btc); color: #fff; }
+.snum.proof { background: var(--proof); color: #fff; }
+.step-content strong { font-size: 13px; font-weight: 600; display: block; margin-bottom: 3px; }
+.step-content span { font-size: 12px; color: var(--muted); line-height: 1.65; }
+
+/* ===== LIFECYCLE ===== */
+.lifecycle { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.lc-block { flex: 1; min-width: 130px; border-radius: 14px; padding: 12px 14px; }
+.lc-pill { display: inline-block; padding: 3px 12px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: .06em; margin-bottom: 8px; text-transform: uppercase; }
+.lc-block ul { list-style: none; font-size: 12px; line-height: 1.85; color: var(--muted); }
+
+/* ===== SIMULATOR SHARED ===== */
+.sim-tabs { display: flex; gap: 0; margin-bottom: 1.75rem; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.sim-tab { flex: 1; padding: 12px 16px; font-size: 13px; font-weight: 600; background: none; border: none; cursor: pointer; color: var(--muted); transition: all .2s; font-family: var(--ff); text-align: center; border-right: 1px solid var(--border); }
+.sim-tab:last-child { border-right: none; }
+.sim-tab.active { background: var(--accent); color: #fff; }
+.sim-sub { display: none; }
+.sim-sub.active { display: block; }
+
+/* Progress bar */
+.sim-progress { display: flex; gap: 0; margin-bottom: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.sp-step { flex: 1; text-align: center; padding: 10px 4px; font-size: 10px; color: var(--muted); border-right: 1px solid var(--border); transition: all .25s; line-height: 1.4; }
+.sp-step:last-child { border-right: none; }
+.sp-step .sdot { display: block; width: 24px; height: 24px; border-radius: 50%; background: var(--bg); border: 1.5px solid var(--border); margin: 0 auto 5px; font-weight: 700; line-height: 22px; font-size: 11px; font-family: var(--ff); transition: all .25s; }
+.sp-step.done { color: var(--locked); }
+.sp-step.done .sdot { background: var(--locked); border-color: var(--locked); color: #fff; }
+.sp-step.active { background: var(--accent-dim); color: var(--accent); }
+.sp-step.active .sdot { background: var(--btc); border-color: var(--btc); color: #fff; }
+
+/* Sim card */
+.sim-card { background: var(--surface); border: 1px solid var(--border); border-top: 3px solid var(--accent); border-radius: var(--card-radius); padding: 1.5rem; margin-bottom: 1rem; min-height: 200px; }
+.sim-card-title { font-size: 16px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 10px; }
+.sim-card-body { font-size: 13px; line-height: 1.75; color: var(--muted); margin-bottom: 14px; }
+.sim-card-body strong { font-weight: 700; color: var(--text); }
+
+/* Ledger */
+.ledger { margin-top: 10px; }
+.ledger-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 12px; border-radius: 10px; margin-bottom: 4px; background: var(--bg); border: 1px solid var(--border); font-size: 12px; }
+.ledger-row .lbl { color: var(--muted2); font-size: 11px; }
+.ledger-row .val { font-family: var(--fm); font-weight: 500; font-size: 11px; }
+.val.btc-c { color: var(--btc-dark); }
+.val.ada-c { color: var(--ada-dark); }
+.val.locked-c { color: var(--locked); }
+.val.proof-c { color: var(--proof); }
+.val.risc-c { color: var(--risc); }
+.val.dim { color: var(--muted2); }
+
+.tx-hash { font-family: var(--fm); font-size: 10px; color: var(--muted2); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; margin-top: 8px; word-break: break-all; display: none; }
+.tx-hash.show { display: block; }
+
+/* Controls */
+.sim-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1rem 1.25rem; }
+.amt-group { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 200px; }
+.amt-group label { font-size: 12px; color: var(--muted); white-space: nowrap; font-weight: 500; }
+.amt-group input[type=range] { flex: 1; accent-color: var(--accent); }
+.amt-val { font-family: var(--fm); font-size: 12px; font-weight: 600; min-width: 70px; color: var(--accent); background: var(--accent-dim); padding: 4px 10px; border-radius: 8px; }
+
+.btn { padding: 10px 24px; border-radius: 12px; font-size: 13px; font-weight: 700; border: 1.5px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; transition: all .2s; font-family: var(--ff); }
+.btn:hover { background: var(--surface2); }
+.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); border-radius: 999px; }
+.btn.primary:hover { opacity: .88; }
+.btn.ghost { background: none; color: var(--muted); border-color: transparent; }
+.btn.ghost:hover { color: var(--text); background: var(--surface); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Sim log */
+.sim-log { font-family: var(--fm); font-size: 11px; background: #0d1117; border-radius: 10px; padding: 10px 14px; max-height: 88px; overflow-y: auto; margin-top: 14px; line-height: 1.9; }
+.log-line.ok { color: #4ADE80; }
+.log-line.info { color: var(--btc); }
+.log-line.ada-lc { color: #93C5FD; }
+.log-line.risc-lc { color: #67e8f9; }
+.log-line.dim { color: #444; }
+
+/* ===== RISC-V PROOF SIMULATOR ===== */
+.risc-header { background: linear-gradient(135deg, #082830 0%, #0c1a1a 100%); border: 1px solid #0e7490; border-radius: var(--card-radius); padding: 1.25rem 1.5rem; margin-bottom: 14px; }
+.risc-header h3 { font-size: 14px; font-weight: 800; color: #67e8f9; margin-bottom: 4px; }
+.risc-header p { font-size: 12px; color: #86efac; line-height: 1.6; }
+
+.cpu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.cpu-panel { background: #0d1117; border: 1px solid #1e3a3a; border-radius: 12px; padding: 10px 12px; }
+.cpu-panel-title { font-size: 10px; font-weight: 700; letter-spacing: .1em; color: #0e7490; text-transform: uppercase; margin-bottom: 8px; font-family: var(--fm); }
+.reg-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; border-bottom: 1px solid #1a2a2a; font-size: 11px; font-family: var(--fm); }
+.reg-row:last-child { border-bottom: none; }
+.reg-name { color: #86efac; font-weight: 600; }
+.reg-val { color: #67e8f9; }
+.reg-val.changed { color: #fbbf24; animation: flash .4s ease; }
+@keyframes flash { 0%{background:rgba(251,191,36,.3)} 100%{background:transparent} }
+
+.mem-row { display: flex; gap: 6px; align-items: flex-start; padding: 3px 0; border-bottom: 1px solid #1a2a2a; font-size: 10px; font-family: var(--fm); }
+.mem-addr { color: #7c6f5a; min-width: 72px; }
+.mem-bytes { color: #67e8f9; word-break: break-all; line-height: 1.5; }
+
+.inst-stream { background: #0d1117; border: 1px solid #1e3a3a; border-radius: 12px; padding: 10px 12px; margin: 10px 0; }
+.inst-line { display: flex; gap: 10px; align-items: center; padding: 4px 0; border-bottom: 1px solid #111; font-size: 11px; font-family: var(--fm); opacity: .4; transition: all .3s; }
+.inst-line:last-child { border-bottom: none; }
+.inst-line.executed { opacity: 1; }
+.inst-line.executing { opacity: 1; background: rgba(6,182,212,.08); border-radius: 4px; }
+.inst-pc { color: #7c6f5a; min-width: 58px; }
+.inst-hex { color: #374151; min-width: 72px; }
+.inst-asm { color: #86efac; flex: 1; }
+.inst-comment { color: #4a5568; font-size: 10px; }
+.inst-tick { width: 16px; height: 16px; border-radius: 50%; border: 1px solid #1e3a3a; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; }
+.inst-tick.done { background: #16a34a; border-color: #16a34a; color: #fff; }
+.inst-tick.current { background: var(--btc); border-color: var(--btc); color: #fff; animation: pulse-t .8s infinite; }
+@keyframes pulse-t { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+.hash-pipeline { margin: 12px 0; }
+.hp-row { display: flex; gap: 0; align-items: stretch; margin-bottom: 6px; }
+.hp-label { min-width: 100px; font-size: 11px; font-weight: 600; color: var(--muted2); font-family: var(--ff); display: flex; align-items: center; }
+.hp-val { flex: 1; background: #0d1117; border: 1px solid #1e3a3a; border-radius: 8px; padding: 6px 10px; font-family: var(--fm); font-size: 10px; color: #67e8f9; word-break: break-all; line-height: 1.5; }
+.hp-val.pending { color: #374151; }
+.hp-val.hashing { color: #fbbf24; animation: pulse-t .5s infinite; }
+.hp-val.done { color: #4ade80; }
+.hp-arrow { display: flex; align-items: center; padding: 0 6px; color: var(--muted2); font-size: 14px; }
+
+.challenge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.challenger-card { background: #0d1117; border: 1px solid #1e3a3a; border-radius: 12px; padding: 10px 12px; }
+.ch-title { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; font-family: var(--fm); }
+.ch-op { color: #f87171; }
+.ch-wd { color: #4ade80; }
+.ch-msg { font-size: 11px; font-family: var(--fm); color: var(--muted); line-height: 1.6; }
+.ch-msg span { display: block; margin-bottom: 2px; }
+.ch-msg span.bad { color: #f87171; }
+.ch-msg span.ok { color: #4ade80; }
+.ch-msg span.btc-c { color: #fbbf24; }
+
+.merkle-visual { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 10px 0; }
+.mk-row { display: flex; gap: 6px; justify-content: center; }
+.mk-node { background: #0d1117; border: 1px solid #1e3a3a; border-radius: 6px; padding: 4px 8px; font-family: var(--fm); font-size: 10px; text-align: center; min-width: 80px; color: #86efac; }
+.mk-node.root { border-color: #4ade80; color: #4ade80; font-weight: 700; }
+.mk-node.btctx { border-color: var(--btc); color: var(--btc); }
+.mk-node.highlight { border-color: var(--proof); color: #c4b5fd; animation: pulse-t .8s infinite; }
+.mk-connector { width: 1px; height: 14px; background: #1e3a3a; }
+
+/* ===== FAQ ===== */
+.faq-item { border-bottom: 1px solid var(--border); }
+.faq-q { width: 100%; text-align: left; padding: 15px 0; font-size: 14px; font-weight: 600; background: none; border: none; cursor: pointer; color: var(--text); display: flex; justify-content: space-between; align-items: center; gap: 12px; font-family: var(--ff); }
+.faq-q::after { content: '+'; font-size: 22px; color: var(--muted2); flex-shrink: 0; line-height: 1; }
+.faq-item.open .faq-q::after { content: '−'; color: var(--accent); }
+.faq-a { display: none; font-size: 13px; color: var(--muted); line-height: 1.75; padding-bottom: 14px; }
+.faq-item.open .faq-a { display: block; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .chain-wrap { grid-template-columns: 1fr; }
+  .bridge-mid { flex-direction: row; }
+  .cpu-grid, .challenge-grid { grid-template-columns: 1fr; }
+  header { padding-bottom: 1rem; }
+  .hdr-logo { display: none; }
+}
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+.pulsing { animation: pulse 1.2s infinite; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-inner">
+    <div class="hdr-logo">sd</div>
+    <div class="hdr-eyebrow">selfdriven · Protocol Education</div>
+    <h1>Bitcoin on <span>Cardano</span><br>without Bitcoin moving</h1>
+    <p>How Taproot, BitVMX and Cardano smart contracts let you use Bitcoin's value across two blockchains — while your BTC never leaves Bitcoin's network. A plain-language guide with interactive simulators.</p>
+  </div>
+</header>
+
+<nav>
+  <div class="nav-inner">
+    <button class="nav-btn active" onclick="showPanel('concept')">The big idea</button>
+    <button class="nav-btn" onclick="showPanel('taproot')">Taproot</button>
+    <button class="nav-btn" onclick="showPanel('bitvm')">BitVMX</button>
+    <button class="nav-btn" onclick="showPanel('cardano')">Cardano</button>
+    <button class="nav-btn" onclick="showPanel('sim')">⬡ Simulator</button>
+    <button class="nav-btn" onclick="showPanel('faq')">Questions</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ========== CONCEPT ========== -->
+<div class="panel active" id="panel-concept">
+  <div class="sec-eyebrow">Overview</div>
+  <div class="sec-title">The big idea</div>
+  <div class="sec-sub">Bitcoin is the most trusted store of value on the internet. Cardano is a programmable smart-contract platform. What if you could use your Bitcoin's value on Cardano — earning yield, trading, lending — while your actual BTC never leaves the safety of the Bitcoin network?</div>
+
+  <div class="highlight">
+    <strong>Think of it like a safety deposit box with a digital window.</strong> You put your gold in the vault (Bitcoin), and a screen on the street (Cardano) shows a live certificate proving the gold is there. Anyone can trade the certificate. When you want your gold back, you tear up the certificate and the vault opens automatically — no staff, no middleman, no trust required.
+  </div>
+
+  <div class="concept-grid" style="margin-top:1.75rem;">
+    <div class="concept-card">
+      <div class="c-icon" style="background:var(--btc-light);">🔒</div>
+      <h4 style="color:var(--btc-dark)">Bitcoin stays put</h4>
+      <p>Your BTC is locked in a special vault on the Bitcoin blockchain. It cannot move unless specific conditions are met — provably, mathematically.</p>
+    </div>
+    <div class="concept-card">
+      <div class="c-icon" style="background:var(--ada-light);">🪙</div>
+      <h4 style="color:var(--ada-dark)">A receipt on Cardano</h4>
+      <p>A token (cBTC) is minted on Cardano representing your locked BTC. You can move, trade, or use it freely. It's backed 1:1 by real BTC in the vault.</p>
+    </div>
+    <div class="concept-card">
+      <div class="c-icon" style="background:var(--locked-light);">✅</div>
+      <h4 style="color:#14532D">Cryptographic proof, not trust</h4>
+      <p>No company holds your BTC. The lock is enforced by Bitcoin's own script rules. Cardano checks a mathematical proof before minting or burning any token.</p>
+    </div>
+    <div class="concept-card">
+      <div class="c-icon" style="background:var(--proof-light);">🔁</div>
+      <h4 style="color:#4C1D95">Redeem any time</h4>
+      <p>Burn the Cardano token, submit proof to Bitcoin, and your BTC unlocks back to your wallet. The system runs perfectly in both directions.</p>
+    </div>
+  </div>
+
+  <div class="chain-wrap">
+    <div class="chain-col">
+      <div class="chain-label btc">₿ Bitcoin network</div>
+      <div class="chain-block hl-lock"><strong>Taproot vault (P2TR)</strong>BTC locked here. BitVMX script enforces unlock conditions.</div>
+      <div class="chain-block"><strong>Bitcoin nodes</strong>Verify all transactions globally. Script rules enforced by every node.</div>
+    </div>
+    <div class="bridge-mid">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+        <div class="bridge-lbl">lock proof</div>
+        <div class="barrow fwd"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:3px;margin-top:8px;">
+        <div class="barrow rev"></div>
+        <div class="bridge-lbl">burn proof</div>
+      </div>
+    </div>
+    <div class="chain-col">
+      <div class="chain-label ada">₳ Cardano network</div>
+      <div class="chain-block hl-ada"><strong>Wrapped BTC token (cBTC)</strong>Minted on lock proof. Burned on redemption.</div>
+      <div class="chain-block"><strong>Plutus smart contract</strong>Verifies Bitcoin proof before any minting or release.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== TAPROOT ========== -->
+<div class="panel" id="panel-taproot">
+  <div class="sec-eyebrow">Layer 1 — Bitcoin</div>
+  <div class="sec-title">Taproot — Bitcoin's secret tree of rules</div>
+  <div class="sec-sub">Activated on Bitcoin in November 2021, Taproot lets you encode complex spending conditions into a single address — and only reveal the rule you actually used. The address looks completely normal from the outside.</div>
+
+  <div class="card accent-top">
+    <div class="card-title">What is Taproot?</div>
+    <div class="card-body">Before Taproot, if you wanted Bitcoin locked by complex rules, the entire rulebook was visible on-chain for anyone to inspect. Taproot uses a clever maths trick — combining Merkle trees with Schnorr signatures — to hide all the rules inside a single public key. <em>The address looks like any ordinary Bitcoin address.</em> Only when you spend the coins do you reveal just the one rule you actually used — the others remain private forever.</div>
+  </div>
+
+  <div class="taproot-box">
+    <div class="tr-root"><span>Taproot address (looks completely normal)</span></div>
+    <div class="tr-connector">▼ secretly encodes a Merkle tree of scripts inside the key</div>
+    <div class="tr-branches">
+      <div class="tr-branch used">
+        <span class="tr-blbl">Script A — revealed when used</span>
+        BitVMX bridge unlock: valid Cardano burn proof + operator co-signature
+      </div>
+      <div class="tr-branch hidden">
+        <span class="tr-blbl">Script B — permanently hidden</span>
+        Emergency: 2-of-3 federation after 6 months of operator inactivity
+      </div>
+      <div class="tr-branch hidden">
+        <span class="tr-blbl">Script C — permanently hidden</span>
+        Key-path spend: instant release if all parties agree simultaneously
+      </div>
+    </div>
+    <div class="tr-note">Only Script A is ever revealed on-chain. B and C remain private forever — even after the coins move.</div>
+  </div>
+
+  <div class="concept-grid">
+    <div class="concept-card">
+      <h4>Why does this matter for bridges?</h4>
+      <p>The vault encodes all unlock conditions — normal release, emergency recovery, federation override — but looks like a simple address. This dramatically reduces on-chain cost and hides the bridge mechanics from observers.</p>
+    </div>
+    <div class="concept-card">
+      <h4>Schnorr signatures</h4>
+      <p>Taproot uses Schnorr signatures, which can be <em>aggregated</em>. Multiple bridge operators each sign independently and their signatures combine into a single compact signature — indistinguishable from a solo spend.</p>
+    </div>
+  </div>
+
+  <div class="card" style="border-top: 3px solid var(--btc);">
+    <div class="card-title">The vault in plain English</div>
+    <div class="card-body">When you send BTC to the bridge, it goes to a Pay-to-Taproot (P2TR) address. That address secretly contains the rule: <em>"These coins can only move if someone proves on Cardano that the wrapped token was burned."</em> Without that proof, the coins are mathematically immovable — not because someone is guarding them, but because the cryptography makes it impossible.</div>
+  </div>
+</div>
+
+<!-- ========== BITVM ========== -->
+<div class="panel" id="panel-bitvm">
+  <div class="sec-eyebrow">The bridge engine</div>
+  <div class="sec-title">BitVMX — running programs inside Bitcoin</div>
+  <div class="sec-sub">Bitcoin was intentionally designed to be simple and not run complex programs. BitVMX is an ingenious workaround: run computations off-chain, then use Bitcoin scripts to verify the result — only settling disputes on-chain when someone cheats.</div>
+
+  <div class="card accent-top">
+    <div class="card-title">The challenge</div>
+    <div class="card-body">Cardano can run sophisticated smart contracts. Bitcoin cannot. For a trustless bridge, Bitcoin needs to verify that something happened on Cardano — specifically, that a wrapped token was burned. BitVMX makes this possible without changing a single rule of the Bitcoin protocol. The simulator tab shows the actual RISC-V computation in detail.</div>
+  </div>
+
+  <div class="concept-grid">
+    <div class="concept-card">
+      <div class="c-icon" style="background:#FEF3C7;">⚡</div>
+      <h4>Optimistic execution</h4>
+      <p>Everyone assumes the bridge operator is honest. No expensive proof is needed in the normal case. The heavy machinery only activates if someone tries to cheat.</p>
+    </div>
+    <div class="concept-card">
+      <div class="c-icon" style="background:var(--proof-light);">🎮</div>
+      <h4>RISC-V challenge game</h4>
+      <p>If an operator cheats, a watchdog triggers a dispute. The operator must execute a RISC-V program step-by-step using Bitcoin scripts — one wrong step and they lose their bond.</p>
+    </div>
+    <div class="concept-card">
+      <div class="c-icon" style="background:var(--risc-light);">🧮</div>
+      <h4>Verifiable computation</h4>
+      <p>The BitVMX RISC-V CPU can verify any computation — including "did this Cardano block really contain a valid burn?" — using Bitcoin's own script opcodes.</p>
+    </div>
+    <div class="concept-card">
+      <div class="c-icon" style="background:var(--locked-light);">🛡️</div>
+      <h4>Economic security</h4>
+      <p>Operators must post a collateral bond. If caught cheating, they lose their bond entirely. Honest behaviour is always more profitable than cheating.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">How BitVMX verifies a Cardano burn — step by step</div>
+    <div class="card-body">
+      <div class="step-list">
+        <div class="step-item">
+          <div class="snum btc">1</div>
+          <div class="step-content"><strong>User burns cBTC on Cardano</strong><span>The Cardano contract permanently destroys the token and records a burn event with the user's Bitcoin wallet address embedded in the transaction datum.</span></div>
+        </div>
+        <div class="step-item">
+          <div class="snum btc">2</div>
+          <div class="step-content"><strong>User submits Merkle proof to operator</strong><span>A Cardano transaction proof (Merkle inclusion proof of the Cardano block + transaction data) is sent off-chain to the bridge operator proving the burn happened.</span></div>
+        </div>
+        <div class="step-item">
+          <div class="snum btc">3</div>
+          <div class="step-content"><strong>Operator unlocks vault (happy path)</strong><span>If the proof is valid, the operator co-signs a Bitcoin transaction releasing BTC to the user's address. Fast, cheap, no on-chain computation needed.</span></div>
+        </div>
+        <div class="step-item">
+          <div class="snum proof">4</div>
+          <div class="step-content"><strong>Dispute path — the RISC-V challenge (if operator cheats)</strong><span>A watchdog initiates the BitVMX challenge. The operator must execute the Cardano-block-verifier program step-by-step on-chain using RISC-V instructions encoded as Bitcoin scripts. One wrong step: operator loses their entire collateral bond and BTC auto-releases to the user.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== CARDANO ========== -->
+<div class="panel" id="panel-cardano">
+  <div class="sec-eyebrow">Layer 2 — Cardano</div>
+  <div class="sec-title">Smart contracts & wrapped tokens</div>
+  <div class="sec-sub">Cardano's programmable layer handles the issuance, tracking, and burning of the wrapped Bitcoin token (cBTC). Its Plutus smart contracts enforce the rules without any central operator.</div>
+
+  <div class="chain-wrap">
+    <div class="chain-col">
+      <div class="chain-label btc">₿ Bitcoin</div>
+      <div class="chain-block hl-lock"><strong>P2TR vault</strong>BTC locked. Taproot + BitVMX conditions enforced by the Bitcoin protocol.</div>
+    </div>
+    <div class="bridge-mid">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+        <div class="bridge-lbl">lock proof</div>
+        <div class="barrow fwd"></div>
+      </div>
+    </div>
+    <div class="chain-col">
+      <div class="chain-label ada">₳ Cardano</div>
+      <div class="chain-block hl-ada"><strong>Plutus minting policy</strong>Verifies Bitcoin lock proof. Mints exactly matching cBTC amount.</div>
+    </div>
+  </div>
+
+  <div class="card accent-top">
+    <div class="card-title">What is a Plutus minting policy?</div>
+    <div class="card-body">Cardano uses a smart-contract language called Plutus. A "minting policy" is a small program that controls when a new token can be created. The bridge's minting policy checks three things before allowing cBTC to be minted: <strong>(1)</strong> a valid Bitcoin lock transaction exists on-chain, <strong>(2)</strong> the amount locked matches the amount being minted, and <strong>(3)</strong> the Bitcoin vault address matches the bridge's vault. Only if all three pass does cBTC come into existence.</div>
+  </div>
+
+  <div class="concept-grid">
+    <div class="concept-card">
+      <div class="c-icon" style="background:var(--ada-light);">📜</div>
+      <h4>eUTxO model</h4>
+      <p>Each cBTC token carries a datum — data embedded in the transaction — including the Bitcoin txid that backs it. This makes auditing completely transparent and verifiable by anyone.</p>
+    </div>
+    <div class="concept-card">
+      <div class="c-icon" style="background:var(--locked-light);">🔍</div>
+      <h4>On-chain audit trail</h4>
+      <p>Every mint and every burn is permanently recorded on Cardano. Anyone can verify at any moment that total cBTC supply exactly equals total BTC locked in the vault.</p>
+    </div>
+  </div>
+
+  <div class="card" style="border-top: 3px solid var(--ada);">
+    <div class="card-title">The complete lifecycle</div>
+    <div class="card-body">
+      <div class="lifecycle">
+        <div class="lc-block" style="background:var(--ada-light);">
+          <span class="lc-pill" style="background:var(--ada);color:#fff;">WRAP</span>
+          <ul>
+            <li>Send BTC to vault</li>
+            <li>Submit proof to Cardano</li>
+            <li>cBTC minted to you</li>
+          </ul>
+        </div>
+        <div class="lc-block" style="background:var(--locked-light);">
+          <span class="lc-pill" style="background:var(--locked);color:#fff;">USE</span>
+          <ul>
+            <li>Trade on DEXes</li>
+            <li>Earn yield in DeFi</li>
+            <li>Use as collateral</li>
+          </ul>
+        </div>
+        <div class="lc-block" style="background:var(--proof-light);">
+          <span class="lc-pill" style="background:var(--proof);color:#fff;">UNWRAP</span>
+          <ul>
+            <li>Burn cBTC on Cardano</li>
+            <li>Submit proof to Bitcoin</li>
+            <li>BTC released to you</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SIMULATOR ========== -->
+<div class="panel" id="panel-sim">
+  <div class="sec-eyebrow">Interactive simulators</div>
+  <div class="sec-title">Bridge simulators</div>
+  <div class="sec-sub">Two simulators: the first walks through the full wrap/unwrap lifecycle. The second digs into the Bitcoin-side BitVMX proof computation — the actual RISC-V instruction execution, SHA-256 Merkle verification, and challenge game that makes the bridge trustless.</div>
+
+  <div class="sim-tabs">
+    <button class="sim-tab active" onclick="showSimTab('lifecycle')">Bridge lifecycle</button>
+    <button class="sim-tab" onclick="showSimTab('proof')">⬡ BitVMX proof computation</button>
+  </div>
+
+  <!-- ---- LIFECYCLE SIM ---- -->
+  <div class="sim-sub active" id="sim-lifecycle">
+    <div class="sim-progress" id="lc-progress">
+      <div class="sp-step active" id="lc-s0"><span class="sdot">1</span>Lock BTC</div>
+      <div class="sp-step" id="lc-s1"><span class="sdot">2</span>Confirm</div>
+      <div class="sp-step" id="lc-s2"><span class="sdot">3</span>Mint cBTC</div>
+      <div class="sp-step" id="lc-s3"><span class="sdot">4</span>Use it</div>
+      <div class="sp-step" id="lc-s4"><span class="sdot">5</span>Burn cBTC</div>
+      <div class="sp-step" id="lc-s5"><span class="sdot">6</span>Unlock</div>
+    </div>
+    <div class="sim-card">
+      <div class="sim-card-title" id="lc-title">Step 1 · Choose your amount and lock BTC</div>
+      <div class="sim-card-body" id="lc-body"></div>
+      <div class="ledger" id="lc-ledger"></div>
+      <div class="tx-hash" id="lc-txhash"></div>
+    </div>
+    <div class="sim-log" id="lc-log"><span class="log-line dim">— bridge simulator ready —</span></div>
+    <div style="height:12px;"></div>
+    <div class="sim-controls">
+      <div class="amt-group">
+        <label>Amount:</label>
+        <input type="range" min="5" max="200" value="50" id="lc-range" oninput="lcUpdateAmt()">
+        <span class="amt-val" id="lc-display">0.50 BTC</span>
+      </div>
+      <button class="btn primary" id="lc-next-btn" onclick="lcNext()">Send BTC to vault →</button>
+      <button class="btn ghost" onclick="lcReset()">↺ Reset</button>
+    </div>
+  </div>
+
+  <!-- ---- BITVMX PROOF SIM ---- -->
+  <div class="sim-sub" id="sim-proof">
+    <div class="risc-header">
+      <h3>⬡ BitVMX RISC-V Proof Computation Simulator</h3>
+      <p>Simulates what happens inside the Bitcoin-side BitVMX verifier when it checks a Cardano burn proof. Watch SHA-256 hash chaining, Merkle tree verification, and RISC-V instruction-by-instruction execution — the same computation that enforces trustless bridge security.</p>
+    </div>
+
+    <div class="sim-progress" id="pf-progress">
+      <div class="sp-step active" id="pf-s0"><span class="sdot">1</span>Setup</div>
+      <div class="sp-step" id="pf-s1"><span class="sdot">2</span>Merkle</div>
+      <div class="sp-step" id="pf-s2"><span class="sdot">3</span>RISC-V exec</div>
+      <div class="sp-step" id="pf-s3"><span class="sdot">4</span>Hash chain</div>
+      <div class="sp-step" id="pf-s4"><span class="sdot">5</span>Challenge</div>
+      <div class="sp-step" id="pf-s5"><span class="sdot">6</span>Verdict</div>
+    </div>
+
+    <div class="sim-card" id="pf-card">
+      <div class="sim-card-title" id="pf-title">Step 1 · BitVMX setup — binding the computation</div>
+      <div class="sim-card-body" id="pf-body"></div>
+      <div id="pf-visual"></div>
+      <div class="tx-hash" id="pf-txhash"></div>
+    </div>
+
+    <div class="sim-log" id="pf-log"><span class="log-line dim">— BitVMX proof simulator ready —</span></div>
+    <div style="height:12px;"></div>
+    <div class="sim-controls" style="justify-content:flex-end;">
+      <div style="flex:1;font-size:12px;color:var(--muted2);font-family:var(--fm);" id="pf-status">Ready to simulate</div>
+      <button class="btn primary" id="pf-next-btn" onclick="pfNext()">Begin computation →</button>
+      <button class="btn ghost" onclick="pfReset()">↺ Reset</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== FAQ ========== -->
+<div class="panel" id="panel-faq">
+  <div class="sec-eyebrow">Common questions</div>
+  <div class="sec-title">Things people ask</div>
+  <div class="sec-sub">Plain answers to the most common questions about wrapped Bitcoin bridges and how they stay trustless.</div>
+
+  <div class="faq-item"><button class="faq-q" onclick="tFaq(this)">Could someone steal my Bitcoin from the vault?</button><div class="faq-a">The vault is a Taproot address. The only way to move the BTC is to satisfy one of the scripts encoded in the Taproot tree. The primary script requires a valid burn proof from Cardano plus a co-signature from the bridge operator. The operator's collateral bond makes cheating economically irrational — they'd lose more than they'd gain. BitVMX is the mathematical backstop: even if an operator tried to steal, a watchdog node can trigger the on-chain RISC-V verification and force the funds back to the user.</div></div>
+  <div class="faq-item"><button class="faq-q" onclick="tFaq(this)">What if the bridge operator disappears?</button><div class="faq-a">The Taproot script tree includes an emergency recovery path hidden in Script B. After a time-lock period — say, 6 months of inactivity — a federation of independent parties can co-sign to release funds. No single party can block access to your BTC indefinitely.</div></div>
+  <div class="faq-item"><button class="faq-q" onclick="tFaq(this)">Does Bitcoin need to be upgraded to support this?</button><div class="faq-a">No — that's the elegance of BitVMX. It works entirely within Bitcoin's existing script rules, using only Taproot (live since November 2021). No new opcodes, no soft forks, no waiting for protocol changes. The innovation is entirely in how the scripts are structured and how the off-chain RISC-V challenge game is designed.</div></div>
+  <div class="faq-item"><button class="faq-q" onclick="tFaq(this)">What is RISC-V and why does BitVMX use it?</button><div class="faq-a">RISC-V is an open-source, simple instruction set architecture — essentially a very simple CPU design. BitVMX uses it because its instructions are small enough to be encoded into Bitcoin scripts one-by-one. This means any computation (including "verify this Cardano block header and transaction Merkle proof") can be broken into steps that Bitcoin can verify in a dispute. The verifier program runs in RISC-V, not Bitcoin Script directly.</div></div>
+  <div class="faq-item"><button class="faq-q" onclick="tFaq(this)">How is this different from WBTC on Ethereum?</button><div class="faq-a">WBTC (Wrapped Bitcoin on Ethereum) is custodial — a company called BitGo physically holds your BTC and you trust them not to run off with it, get hacked, or face regulatory shutdown. The Taproot + BitVMX approach is trustless: the conditions are enforced by Bitcoin's own cryptography. There is no company that "holds" your BTC. The difference is trusting a company versus trusting mathematics.</div></div>
+  <div class="faq-item"><button class="faq-q" onclick="tFaq(this)">How long does wrapping and unwrapping take?</button><div class="faq-a">Wrapping (BTC → cBTC) requires 6 Bitcoin block confirmations — about 60 minutes — for security. Unwrapping (cBTC → BTC) in the happy path takes roughly 1 Bitcoin confirmation after the operator releases. The BitVMX dispute path would take longer, but is expected to rarely if ever be needed in practice.</div></div>
+  <div class="faq-item"><button class="faq-q" onclick="tFaq(this)">What can I do with cBTC on Cardano?</button><div class="faq-a">cBTC is a native Cardano token (CIP-25 standard) minted by the bridge's Plutus policy. It behaves like any Cardano token — trade on DEXes like Minswap or SundaeSwap, supply to lending protocols, provide liquidity, use as collateral, or simply send to another wallet. The only special property: burning it triggers the BTC release from the vault.</div></div>
+</div>
+
+</main>
+
+<script>
+// ===== NAV =====
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  const m = {concept:0,taproot:1,bitvm:2,cardano:3,sim:4,faq:5};
+  document.querySelectorAll('.nav-btn')[m[id]].classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function tFaq(btn) { btn.closest('.faq-item').classList.toggle('open'); }
+function showSimTab(id) {
+  document.querySelectorAll('.sim-sub').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.sim-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('sim-'+id).classList.add('active');
+  const tabs=document.querySelectorAll('.sim-tab');
+  tabs[id==='lifecycle'?0:1].classList.add('active');
+}
+
+// ===== HELPERS =====
+const rh = n => Array.from({length:n},()=>Math.floor(Math.random()*16).toString(16)).join('');
+const b32 = () => rh(64);
+
+function ledger(rows) {
+  return '<div class="ledger">'+rows.map(r=>'<div class="ledger-row"><span class="lbl">'+r[0]+'</span><span class="val '+(r[2]||'')+'">'+r[1]+'</span></div>').join('')+'</div>';
+}
+function setTx(id,txt){const el=document.getElementById(id);el.textContent=txt;el.className='tx-hash show';}
+function hideTx(id){document.getElementById(id).className='tx-hash';}
+function addLog(logId, type, msg) {
+  const el=document.getElementById(logId);
+  const t=new Date();
+  const ts=[t.getHours(),t.getMinutes(),t.getSeconds()].map(n=>n.toString().padStart(2,'0')).join(':');
+  el.innerHTML+='<div class="log-line '+type+'">['+ts+'] '+msg+'</div>';
+  el.scrollTop=el.scrollHeight;
+}
+
+// ===== LIFECYCLE SIMULATOR =====
+let lcStep=0, lcAmt=0.5, lcUserBtc=1.2, lcUserCbtc=0, lcVaultBtc=0;
+
+const lcStages=[
+  {
+    title:'Step 1 · Choose your amount and lock BTC',
+    btn:'Send BTC to vault →',
+    render(){
+      document.getElementById('lc-body').innerHTML='You\'re about to send <strong>'+lcAmt.toFixed(2)+' BTC</strong> to the Taproot vault address. This special address secretly contains the BitVMX bridge script — but from outside it looks like any ordinary Bitcoin address. Once sent, your BTC is cryptographically locked.';
+      document.getElementById('lc-ledger').innerHTML=ledger([
+        ['Your BTC wallet',lcUserBtc.toFixed(2)+' BTC','btc-c'],
+        ['Taproot vault','— (empty)','dim'],
+        ['Your cBTC (Cardano)',lcUserCbtc.toFixed(2)+' cBTC','ada-c'],
+      ]);
+      hideTx('lc-txhash');
+    }
+  },
+  {
+    title:'Step 2 · ⬡ Bitcoin network confirming…',
+    btn:'Confirmations received ✓',
+    render(){
+      const txid=b32(); const addr='bc1p'+rh(39);
+      lcVaultBtc=lcAmt; lcUserBtc-=lcAmt;
+      document.getElementById('lc-body').innerHTML='<span class="pulsing" style="color:var(--btc-dark)">Broadcasting to Bitcoin mempool…</span><br><br>Your transaction is being picked up by miners. The vault address <code style="font-size:10px;font-family:var(--fm);">'+addr.substring(0,22)+'…</code> now holds your BTC. Waiting for 6 block confirmations (~60 minutes).';
+      document.getElementById('lc-ledger').innerHTML=ledger([
+        ['Your BTC wallet',lcUserBtc.toFixed(2)+' BTC','btc-c'],
+        ['Taproot vault (locked 🔒)',lcVaultBtc.toFixed(2)+' BTC','locked-c'],
+        ['Your cBTC wallet','0.00 cBTC','dim'],
+      ]);
+      setTx('lc-txhash','BTC txid: '+txid);
+      addLog('lc-log','info','₿ TX broadcast: '+txid.substring(0,22)+'…');
+      addLog('lc-log','ok','🔒 Vault locked: '+addr.substring(0,22)+'…');
+    }
+  },
+  {
+    title:'Step 3 · Minting cBTC on Cardano',
+    btn:'cBTC minted ✓',
+    render(){
+      const mtx=b32(); const caddr='addr1q'+rh(50);
+      lcUserCbtc+=lcAmt;
+      document.getElementById('lc-body').innerHTML='The bridge has verified your Bitcoin lock transaction. The Cardano Plutus minting policy is now creating <strong>'+lcAmt.toFixed(2)+' cBTC</strong> and sending it to your Cardano wallet. The token\'s datum contains your Bitcoin txid as cryptographic proof of backing.';
+      document.getElementById('lc-ledger').innerHTML=ledger([
+        ['Bitcoin vault (locked)',lcVaultBtc.toFixed(2)+' BTC 🔒','locked-c'],
+        ['cBTC minted',lcAmt.toFixed(2)+' cBTC','ada-c'],
+        ['Your Cardano wallet',lcUserCbtc.toFixed(2)+' cBTC','ada-c'],
+      ]);
+      setTx('lc-txhash','Cardano mint tx: '+mtx);
+      addLog('lc-log','ada-lc','₳ Plutus minting policy executed');
+      addLog('lc-log','ok','✓ '+lcAmt.toFixed(2)+' cBTC minted');
+    }
+  },
+  {
+    title:'Step 4 · Using your cBTC on Cardano',
+    btn:'Ready to unwrap →',
+    render(){
+      document.getElementById('lc-body').innerHTML='Your <strong>'+lcUserCbtc.toFixed(2)+' cBTC</strong> is live on Cardano. Your real BTC sits safely locked in the vault.<br><br><strong>What you can do:</strong><br>• Trade on DEXes (Minswap, SundaeSwap, WingRiders)<br>• Supply to lending protocols to earn interest<br>• Provide liquidity to earn trading fees<br>• Send to any Cardano wallet instantly<br>• Use as collateral to borrow other assets';
+      document.getElementById('lc-ledger').innerHTML=ledger([
+        ['Bitcoin vault (locked)',lcVaultBtc.toFixed(2)+' BTC 🔒','locked-c'],
+        ['cBTC total supply',lcUserCbtc.toFixed(2)+' cBTC','ada-c'],
+        ['Your cBTC balance',lcUserCbtc.toFixed(2)+' cBTC','ada-c'],
+      ]);
+      hideTx('lc-txhash');
+    }
+  },
+  {
+    title:'Step 5 · Burning cBTC to request Bitcoin back',
+    btn:'Burn cBTC & request unlock →',
+    render(){
+      const btx=b32();
+      document.getElementById('lc-body').innerHTML='You\'re done with cBTC and want your real Bitcoin back. You submit a Cardano transaction that <strong>permanently burns (destroys)</strong> your '+lcUserCbtc.toFixed(2)+' cBTC. The burn transaction embeds your Bitcoin wallet address so the bridge knows where to release your BTC.';
+      document.getElementById('lc-ledger').innerHTML=ledger([
+        ['cBTC being burned 🔥',lcUserCbtc.toFixed(2)+' cBTC','proof-c'],
+        ['cBTC supply after burn','0.00 cBTC','dim'],
+        ['Bitcoin release address','your BTC wallet','btc-c'],
+      ]);
+      setTx('lc-txhash','Cardano burn tx: '+btx);
+      addLog('lc-log','ada-lc','₳ cBTC burn tx submitted');
+      addLog('lc-log','info','🔥 '+lcUserCbtc.toFixed(2)+' cBTC permanently destroyed');
+    }
+  },
+  {
+    title:'Step 6 · ✅ BTC unlocked and returned!',
+    btn:'↺ Start over',
+    render(){
+      const rtx=b32();
+      lcUserBtc+=lcAmt; const prev=lcUserCbtc; lcUserCbtc=0; lcVaultBtc=0;
+      document.getElementById('lc-body').innerHTML='<strong style="color:var(--locked)">Bridge cycle complete!</strong><br><br>The bridge operator verified the Cardano burn proof and co-signed the Bitcoin release transaction. Your <strong>'+lcAmt.toFixed(2)+' BTC</strong> has been sent from the vault to your Bitcoin wallet.<br><br>Your real Bitcoin never left the Bitcoin network. It sat in a cryptographically-locked Taproot vault the entire time while cBTC represented its value on Cardano.';
+      document.getElementById('lc-ledger').innerHTML=ledger([
+        ['Your BTC wallet',lcUserBtc.toFixed(2)+' BTC ✓','btc-c'],
+        ['Taproot vault','0.00 BTC (empty)','dim'],
+        ['cBTC total supply','0.00 cBTC (burned)','dim'],
+      ]);
+      setTx('lc-txhash','BTC release tx: '+rtx);
+      addLog('lc-log','ok','₿ '+lcAmt.toFixed(2)+' BTC released from vault');
+      addLog('lc-log','ok','✓ Bridge cycle complete');
+    }
+  }
+];
+
+function lcUpdateAmt(){
+  const v=document.getElementById('lc-range').value;
+  lcAmt=parseFloat((v/100).toFixed(2));
+  document.getElementById('lc-display').textContent=lcAmt.toFixed(2)+' BTC';
+  if(lcStep===0) lcStages[0].render();
+}
+function lcRenderStep(){
+  const s=lcStages[lcStep];
+  document.getElementById('lc-title').textContent=s.title;
+  document.getElementById('lc-next-btn').textContent=s.btn;
+  s.render();
+  for(let i=0;i<6;i++){
+    const el=document.getElementById('lc-s'+i);
+    el.classList.remove('active','done');
+    if(i<lcStep)el.classList.add('done');
+    else if(i===lcStep)el.classList.add('active');
+    el.querySelector('.sdot').textContent=i<lcStep?'✓':(i+1);
+  }
+}
+function lcNext(){if(lcStep===5){lcReset();return;}lcStep++;lcRenderStep();}
+function lcReset(){lcStep=0;lcUserBtc=1.2;lcUserCbtc=0;lcVaultBtc=0;document.getElementById('lc-log').innerHTML='<span class="log-line dim">— bridge simulator reset —</span>';lcRenderStep();}
+lcUpdateAmt(); lcRenderStep();
+
+// ===== BITVMX PROOF SIMULATOR =====
+let pfStep=0;
+const burnTxid=b32();
+const blockHeader='00000020'+rh(32)+'7d3b2a'+rh(26)+'1a9f'+rh(8);
+const burnTxHash=b32();
+const merkleRoot=b32();
+const sibling1=b32();
+const sibling2=b32();
+
+const pfStages=[
+  {
+    title:'Step 1 · BitVMX setup — binding the computation',
+    btn:'Load Merkle proof →',
+    status:'Initialising RISC-V verifier program',
+    render(){
+      document.getElementById('pf-body').innerHTML='Before any coins can move, the bridge operator and user must agree on what program the BitVMX verifier will run. This program is the <strong>Cardano block verifier</strong> — a RISC-V binary that checks a Cardano block header, a transaction Merkle proof, and confirms the burn transaction is valid.<br><br>The program hash is committed to inside the Taproot key. If the operator tries to run a different program, they lose their bond immediately.';
+      document.getElementById('pf-visual').innerHTML=`
+        <div class="cpu-grid">
+          <div class="cpu-panel">
+            <div class="cpu-panel-title">Verifier program metadata</div>
+            <div class="reg-row"><span class="reg-name">program</span><span class="reg-val">cardano_block_verifier_v2</span></div>
+            <div class="reg-row"><span class="reg-name">ISA</span><span class="reg-val">RISC-V RV32I</span></div>
+            <div class="reg-row"><span class="reg-name">program_hash</span><span class="reg-val">${rh(32)}…</span></div>
+            <div class="reg-row"><span class="reg-name">committed_in_taproot</span><span class="reg-val" style="color:#4ade80">YES</span></div>
+            <div class="reg-row"><span class="reg-name">operator_bond</span><span class="reg-val">2.00 BTC</span></div>
+          </div>
+          <div class="cpu-panel">
+            <div class="cpu-panel-title">Cardano burn event</div>
+            <div class="reg-row"><span class="reg-name">network</span><span class="reg-val">Cardano mainnet</span></div>
+            <div class="reg-row"><span class="reg-name">burn_tx</span><span class="reg-val">${burnTxid.substring(0,16)}…</span></div>
+            <div class="reg-row"><span class="reg-name">amount_burned</span><span class="reg-val" style="color:#93c5fd">${lcAmt.toFixed(2)} cBTC</span></div>
+            <div class="reg-row"><span class="reg-name">btc_dest</span><span class="reg-val">bc1p${rh(10)}…</span></div>
+            <div class="reg-row"><span class="reg-name">block_height</span><span class="reg-val">10,847,221</span></div>
+          </div>
+        </div>`;
+      hideTx('pf-txhash');
+      addLog('pf-log','risc-lc','RISC-V verifier: cardano_block_verifier_v2 loaded');
+      addLog('pf-log','info','Program hash committed in Taproot key');
+    }
+  },
+  {
+    title:'Step 2 · Merkle tree verification — proving the burn exists',
+    btn:'Run RISC-V verifier →',
+    status:'Verifying Cardano transaction Merkle inclusion',
+    render(){
+      document.getElementById('pf-body').innerHTML='The burn transaction must be proven to exist inside a specific Cardano block. This uses a <strong>Merkle inclusion proof</strong> — a chain of hashes from the transaction up to the block\'s Merkle root. The RISC-V program computes SHA-256 hashes at each level and confirms the root matches the block header.<br><br>This is the first thing the RISC-V program checks: <em>does this burn transaction actually exist in this Cardano block?</em>';
+      document.getElementById('pf-visual').innerHTML=`
+        <div class="merkle-visual">
+          <div class="mk-row"><div class="mk-node root">Merkle root<br><span style="font-size:9px;">${merkleRoot.substring(0,12)}…</span></div></div>
+          <div class="mk-connector"></div>
+          <div class="mk-row">
+            <div class="mk-node">H(left)<br><span style="font-size:9px;">${rh(24).substring(0,12)}…</span></div>
+            <div style="width:20px;"></div>
+            <div class="mk-node highlight">H(right) ← path<br><span style="font-size:9px;">${sibling2.substring(0,12)}…</span></div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;width:100%;max-width:320px;"><div class="mk-connector" style="margin-right:40px;"></div></div>
+          <div class="mk-row" style="justify-content:flex-end;max-width:320px;">
+            <div class="mk-node" style="opacity:.4">sibling<br><span style="font-size:9px;">${sibling1.substring(0,12)}…</span></div>
+            <div style="width:20px;"></div>
+            <div class="mk-node btctx">BURN TX<br><span style="font-size:9px;">${burnTxHash.substring(0,12)}…</span></div>
+          </div>
+        </div>
+        <div class="hash-pipeline" style="margin-top:10px;">
+          <div class="hp-row">
+            <div class="hp-label">Leaf hash</div>
+            <div class="hp-val done">SHA256(SHA256(burn_tx_bytes)) = ${burnTxHash.substring(0,32)}…</div>
+          </div>
+          <div class="hp-row">
+            <div class="hp-label">Level 1</div>
+            <div class="hp-val done">SHA256(leaf ‖ sibling1) = ${sibling2.substring(0,32)}…</div>
+          </div>
+          <div class="hp-row">
+            <div class="hp-label">Root check</div>
+            <div class="hp-val done" style="color:#4ade80">SHA256(H_left ‖ H_right) = ${merkleRoot.substring(0,32)}… ✓ MATCHES BLOCK HEADER</div>
+          </div>
+        </div>`;
+      addLog('pf-log','risc-lc','Merkle inclusion proof: 3 levels, 2 siblings');
+      addLog('pf-log','ok','SHA-256 hash chain verified ✓ Burn TX in block 10,847,221');
+    }
+  },
+  {
+    title:'Step 3 · RISC-V instruction execution',
+    btn:'Compute state transition hash →',
+    status:'Executing RISC-V instructions step-by-step',
+    render(){
+      document.getElementById('pf-body').innerHTML='The RISC-V verifier program now runs instruction-by-instruction. Each instruction reads from registers and memory, computes a result, and writes back. <strong>Every single step produces a hash of the machine state</strong> — this is what BitVMX can check on Bitcoin if a dispute arises. The operator must be able to prove each step is correct.';
+      const regs=[
+        ['x0 (zero)','0x00000000'],['x1 (ra)','0x00010234'],['x2 (sp)','0xBFF0'],
+        ['x3 (gp)','0x00020000'],['x5 (t0)','0x'+rh(8)],['x6 (t1)','0x'+rh(8)],
+        ['x10 (a0)','ptr_merkle_proof'],['x11 (a1)','ptr_block_header'],
+        ['x12 (a2)','0x'+rh(8)],['x17 (a7)','0x00000004'],
+      ];
+      const instructions=[
+        {pc:'0x00010180',hex:'0x'+rh(8),asm:'lw   x10, 0(x2)',comment:'load merkle_root ptr',done:true},
+        {pc:'0x00010184',hex:'0x'+rh(8),asm:'lw   x11, 4(x2)',comment:'load block_header ptr',done:true},
+        {pc:'0x00010188',hex:'0x'+rh(8),asm:'jal  x1, sha256_compress',comment:'call SHA-256 compress',done:true},
+        {pc:'0x0001018C',hex:'0x'+rh(8),asm:'lw   x5, 0(x10)',comment:'load computed hash',current:true},
+        {pc:'0x00010190',hex:'0x'+rh(8),asm:'lw   x6, 0(x11)',comment:'load expected root'},
+        {pc:'0x00010194',hex:'0x'+rh(8),asm:'bne  x5, x6, fail',comment:'compare hashes'},
+        {pc:'0x00010198',hex:'0x'+rh(8),asm:'addi x10, x0, 1',comment:'return success=1'},
+        {pc:'0x0001019C',hex:'0x'+rh(8),asm:'jalr x0, 0(x1)',comment:'return to caller'},
+      ];
+      document.getElementById('pf-visual').innerHTML=`
+        <div class="cpu-grid">
+          <div class="cpu-panel">
+            <div class="cpu-panel-title">Registers (RV32I)</div>
+            ${regs.map(r=>'<div class="reg-row"><span class="reg-name">'+r[0]+'</span><span class="reg-val">'+r[1]+'</span></div>').join('')}
+          </div>
+          <div class="cpu-panel">
+            <div class="cpu-panel-title">Memory (selected)</div>
+            <div class="mem-row"><span class="mem-addr">0x00020000</span><span class="mem-bytes">${rh(16)} …merkle_root</span></div>
+            <div class="mem-row"><span class="mem-addr">0x00020020</span><span class="mem-bytes">${rh(16)} …block_hdr</span></div>
+            <div class="mem-row"><span class="mem-addr">0x00020040</span><span class="mem-bytes">${rh(16)} …proof_path</span></div>
+            <div class="mem-row"><span class="mem-addr">0x00020060</span><span class="mem-bytes">${rh(16)} …burn_txid</span></div>
+            <div class="mem-row"><span class="mem-addr">0xBFF0</span><span class="mem-bytes">${rh(16)} …stack</span></div>
+          </div>
+        </div>
+        <div class="inst-stream">
+          <div class="cpu-panel-title" style="color:#0e7490;padding:0 0 6px;">Instruction stream</div>
+          ${instructions.map(i=>'<div class="inst-line'+(i.done?' executed':'')+(i.current?' executing':'')+'"><div class="inst-tick'+(i.done?' done':'')+(i.current?' current':'')+'">'+( i.done?'✓': i.current?'▶':'')+'</div><span class="inst-pc">'+i.pc+'</span><span class="inst-hex">'+i.hex+'</span><span class="inst-asm">'+i.asm+'</span><span class="inst-comment">// '+i.comment+'</span></div>').join('')}
+        </div>`;
+      addLog('pf-log','risc-lc','RISC-V: 3 instructions executed, 1 executing');
+      addLog('pf-log','risc-lc','Current PC: 0x0001018C — lw x5, 0(x10)');
+    }
+  },
+  {
+    title:'Step 4 · State transition hash chain',
+    btn:'Simulate dispute challenge →',
+    status:'Computing execution trace hash chain',
+    render(){
+      document.getElementById('pf-body').innerHTML='After each instruction executes, the BitVMX system hashes the entire machine state (registers + memory). These hashes form a <strong>chain</strong> — the hash of state N feeds into the computation of state N+1. This is what makes the dispute game possible: if the operator claims the wrong state transition, a watchdog can pinpoint exactly which step is wrong and prove it on Bitcoin.';
+      const states=[
+        {label:'State S0 (initial)',hash:rh(64),done:true},
+        {label:'After lw x10, 0(x2)',hash:rh(64),done:true},
+        {label:'After lw x11, 4(x2)',hash:rh(64),done:true},
+        {label:'After jal sha256',hash:rh(64),done:true},
+        {label:'After lw x5, 0(x10)',hash:rh(64),hashing:true},
+        {label:'After lw x6, 0(x11)',hash:rh(64),pending:true},
+        {label:'After bne comparison',hash:rh(64),pending:true},
+        {label:'Final state Sf',hash:rh(64),pending:true},
+      ];
+      document.getElementById('pf-visual').innerHTML=`
+        <div class="hash-pipeline">
+          ${states.map((s,i)=>`
+          <div class="hp-row">
+            <div class="hp-label" style="font-size:10px;">S${i}${s.label.includes('initial')?'':''}</div>
+            <div class="hp-val ${s.done?'done':s.hashing?'hashing':'pending'}">
+              ${s.done||s.hashing ? 'H(state'+i+') = '+s.hash.substring(0,48)+'…' : 'pending…'}
+            </div>
+          </div>`).join('')}
+        </div>
+        <div style="margin-top:10px;padding:10px 12px;background:#0d1117;border-radius:8px;font-family:var(--fm);font-size:11px;color:#4a5568;">
+          <span style="color:#0e7490;">// How the chain works:</span><br>
+          H(S_n+1) = SHA256( H(S_n) ‖ instruction_encoding ‖ register_delta ‖ memory_delta )<br>
+          <span style="color:#4ade80;">// Any deviation from the committed program produces a different hash</span><br>
+          <span style="color:#4ade80;">// Bitcoin can verify any single step with a single script execution</span>
+        </div>`;
+      addLog('pf-log','risc-lc','State hash chain: 5/8 steps computed');
+      addLog('pf-log','info','SHA256 chaining: H(S4) = '+rh(20)+'…');
+    }
+  },
+  {
+    title:'Step 5 · Challenge game — catching a dishonest operator',
+    btn:'View final verdict →',
+    status:'Simulating bisection challenge protocol',
+    render(){
+      document.getElementById('pf-body').innerHTML='<strong>Scenario: the operator tries to release BTC without a valid burn proof.</strong> A watchdog detects the discrepancy and initiates the BitVMX challenge game. The protocol uses bisection search — halving the disputed execution trace at each round — to find the single wrong step in O(log N) Bitcoin transactions. Once found, Bitcoin script can verify that one step and slash the operator\'s bond.';
+      document.getElementById('pf-visual').innerHTML=`
+        <div class="challenge-grid">
+          <div class="challenger-card">
+            <div class="ch-title ch-op">Operator (dishonest)</div>
+            <div class="ch-msg">
+              <span class="btc-c">Round 1: claims S4_hash = ${rh(16)}…</span>
+              <span class="bad">↳ WATCHDOG: that hash doesn't match!</span>
+              <span class="btc-c">Round 2: claims S2_hash = ${rh(16)}…</span>
+              <span class="ok">↳ WATCHDOG: S2 matches, narrowing…</span>
+              <span class="btc-c">Round 3: claims S3_hash = ${rh(16)}…</span>
+              <span class="bad">↳ WATCHDOG: S3 is wrong! Found it.</span>
+              <span style="color:#fbbf24;">Dispute: step S3→S4 is incorrect</span>
+            </div>
+          </div>
+          <div class="challenger-card">
+            <div class="ch-title ch-wd">Watchdog (honest)</div>
+            <div class="ch-msg">
+              <span class="ok">Has correct execution trace</span>
+              <span>Knows real S3_hash = ${rh(16).substring(0,12)}…</span>
+              <span>Submits Bitcoin TX with:</span>
+              <span class="ok">• State S3 (registers+memory)</span>
+              <span class="ok">• Instruction at PC 0x0001018C</span>
+              <span class="ok">• Expected state S4</span>
+              <span class="ok">• Bitcoin script verifies step ✓</span>
+              <span style="color:#4ade80;font-weight:600;">Operator loses 2.00 BTC bond</span>
+            </div>
+          </div>
+        </div>
+        <div style="padding:10px 14px;background:#0d1117;border-radius:8px;margin-top:10px;font-size:11px;font-family:var(--fm);">
+          <span style="color:#0e7490;">// Bisection complexity: O(log₂ N) rounds for N-instruction program</span><br>
+          <span style="color:#86efac;">// Each round = 1 Bitcoin transaction (~few hundred bytes)</span><br>
+          <span style="color:#86efac;">// Final verification = 1 Bitcoin script evaluating 1 RISC-V instruction</span><br>
+          <span style="color:#4ade80;">// Result: trustless enforcement with minimal on-chain footprint</span>
+        </div>`;
+      addLog('pf-log','risc-lc','Bisection: 3 rounds, step S3→S4 identified as fraudulent');
+      addLog('pf-log','ok','Bitcoin script: single-step verification ready');
+    }
+  },
+  {
+    title:'Step 6 · Verdict — trustless enforcement complete',
+    btn:'↺ Run again',
+    status:'Proof computation complete',
+    render(){
+      document.getElementById('pf-body').innerHTML='<strong style="color:var(--locked)">Proof computation complete.</strong><br><br>The BitVMX challenge game has identified the fraudulent step, verified it using Bitcoin script, and automatically enforced the correct outcome — all without any trusted third party, without changing Bitcoin, and with only a handful of Bitcoin transactions.<br><br>In the <strong>honest path</strong> (no dispute), none of this machinery is ever needed — the operator simply signs the release and the coins move normally. The RISC-V computation is a <em>backstop</em> that makes honesty the rational choice.';
+      document.getElementById('pf-visual').innerHTML=`
+        <div class="cpu-grid">
+          <div class="cpu-panel" style="border-color:#16a34a;">
+            <div class="cpu-panel-title" style="color:#4ade80;">Honest path outcome</div>
+            <div class="reg-row"><span class="reg-name">result</span><span class="reg-val" style="color:#4ade80;">BURN PROOF VALID ✓</span></div>
+            <div class="reg-row"><span class="reg-name">btc_released</span><span class="reg-val" style="color:#fbbf24;">${lcAmt.toFixed(2)} BTC</span></div>
+            <div class="reg-row"><span class="reg-name">tx_count</span><span class="reg-val" style="color:#4ade80;">1 (operator release)</span></div>
+            <div class="reg-row"><span class="reg-name">on_chain_compute</span><span class="reg-val" style="color:#4ade80;">NONE NEEDED</span></div>
+            <div class="reg-row"><span class="reg-name">time</span><span class="reg-val" style="color:#4ade80;">~1 block confirmation</span></div>
+          </div>
+          <div class="cpu-panel" style="border-color:#dc2626;">
+            <div class="cpu-panel-title" style="color:#f87171;">Dispute path outcome</div>
+            <div class="reg-row"><span class="reg-name">result</span><span class="reg-val" style="color:#4ade80;">CHEAT DETECTED ✓</span></div>
+            <div class="reg-row"><span class="reg-name">operator_bond</span><span class="reg-val" style="color:#f87171;">SLASHED (2.00 BTC)</span></div>
+            <div class="reg-row"><span class="reg-name">user_btc</span><span class="reg-val" style="color:#4ade80;">RETURNED ✓</span></div>
+            <div class="reg-row"><span class="reg-name">btc_txs_used</span><span class="reg-val" style="color:#fbbf24;">~log₂(N) rounds</span></div>
+            <div class="reg-row"><span class="reg-name">trust_required</span><span class="reg-val" style="color:#4ade80;">ZERO</span></div>
+          </div>
+        </div>`;
+      setTx('pf-txhash','Verifier program hash: '+rh(64));
+      addLog('pf-log','ok','BitVMX proof simulation complete');
+      addLog('pf-log','ok','Trust required: ZERO — mathematics enforces the outcome');
+    }
+  }
+];
+
+function pfRenderStep(){
+  const s=pfStages[pfStep];
+  document.getElementById('pf-title').textContent=s.title;
+  document.getElementById('pf-next-btn').textContent=pfStep===5?'↺ Run again':s.btn;
+  document.getElementById('pf-status').textContent=s.status;
+  s.render();
+  for(let i=0;i<6;i++){
+    const el=document.getElementById('pf-s'+i);
+    el.classList.remove('active','done');
+    if(i<pfStep)el.classList.add('done');
+    else if(i===pfStep)el.classList.add('active');
+    el.querySelector('.sdot').textContent=i<pfStep?'✓':(i+1);
+  }
+}
+function pfNext(){if(pfStep===5){pfReset();return;}pfStep++;pfRenderStep();}
+function pfReset(){pfStep=0;document.getElementById('pf-log').innerHTML='<span class="log-line dim">— BitVMX simulator reset —</span>';pfRenderStep();}
+pfRenderStep();
+</script>
+</body>
+</html>
